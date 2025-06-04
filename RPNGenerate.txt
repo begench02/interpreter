@@ -1,0 +1,46 @@
+
+void RPN::generate() {
+  TokenCursor tokenCursor;
+  int line_number = 0; 
+
+  string line;
+  while (getline(*program, line)) {
+    int offset = 0;
+    while (offset < line.length()) {
+      Token *token = tokenCursor.scanToken(line, &offset);
+      if (token->getType() == ASSIGN) {
+        Token *token = tokenCursor.scanToken(line, &offset);
+        string variable_name = this->result.back()->getLiteral();
+        string variable_value = token->getLiteral();
+        this->variables.insert({ variable_name, variable_value });
+      }
+      else if (token->isOperation()) {
+        while (!this->operations.empty()) {
+          if (this->operations.top()->getType() != OPEN_ROUND_BRACKET && stoi(this->operations.top()->getLiteral()) > stoi(token->getLiteral())) {
+            this->result.push_back(this->operations.top());
+            this->operations.pop();
+          } else {
+            break;
+          }
+        }
+
+        this->operations.push(token);
+      } else if (token->getType() == OPEN_ROUND_BRACKET) {
+        this->operations.push(token);
+      } else if (token->getType() == CLOSE_ROUND_BRACKET) {
+        while (this->operations.top()->getType() != OPEN_ROUND_BRACKET) {
+          this->result.push_back(this->operations.top());
+          this->operations.pop();
+        }
+      } else {
+        this->result.push_back(token);
+      }
+    }
+
+  }
+
+  while (!this->operations.empty()) {
+    this->result.push_back(this->operations.top());
+    this->operations.pop();
+  }
+}
