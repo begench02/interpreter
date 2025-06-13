@@ -17,7 +17,7 @@ Token* TokenCursor::scanCharacter(string line, int start, int *current, State st
       if (keywords.count(identifier)) {
         return new Token(keywords[identifier]);
       } else {
-        return token;
+        return new Token(IDENTIFIER, identifier);
       }
     } else {
       return token;
@@ -72,11 +72,11 @@ Token* TokenCursor::scanCharacter(string line, int start, int *current, State st
 
   CharacterType *characterType = new CharacterType(character);
   if (characterType->type() == NUMBER) {
-    state = this->transitionTable[state][INTEGER];
+    state = this->transitionTable[state][INTEGER - 7];
     (*current)++;
     return this->scanCharacter(line, start, current, state, new Token(INTEGER));
   } else if (characterType->type() == STRING) {
-    state = this->transitionTable[state][IDENTIFIER];
+    state = this->transitionTable[state][IDENTIFIER - 7];
     (*current)++;
     return this->scanCharacter(line, start, current, state, new Token(IDENTIFIER));
   }

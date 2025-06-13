@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
   RPN *rpn = new RPN(&file);
   rpn->generate();
- // int result = rpn->execute();
+  int result = rpn->execute();
  // cout << "Result: " << result << endl;
   
   file.close();

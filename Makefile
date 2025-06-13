@@ -1,5 +1,5 @@
 CC = g++
 FLAGS = -g
 
-main: *.cpp
+res: *.cpp
 	${CC} ${FLAGS} $^ -o $@
