@@ -41,6 +41,7 @@ class TokenCursor {
         unordered_map<string, TokenType> keywords = {
           { "int", INT },
           { "intarr", INTARR },
+          { "while", WHILE },
           { "if", IF },
           { "else", ELSE },
           { "cin", CIN },

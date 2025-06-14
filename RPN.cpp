@@ -67,6 +67,19 @@ void RPN::generate() {
         rpn[tag_position] = new Token(TAG_PLACE, to_string(rpn.size()));
 
         break;
+      } case PROGRAM4: {
+        tags.push(rpn.size());
+
+        break;
+      } case PROGRAM5: {
+        int tag_position = tags.top();
+        tags.pop();
+
+        rpn[tag_position] = new Token(TAG_PLACE, to_string(rpn.size() + 2));
+        rpn.push_back(new Token(TAG_PLACE, to_string(tags.top())));
+        rpn.push_back(new Token(JUMP));
+
+        break;
       } case PROGRAM11: {
         variables[token->getLiteral()] = "0";
 
