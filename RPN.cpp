@@ -113,7 +113,7 @@ void RPN::generate() {
       while (true) {
         int current_grammar = ll.top();
 
-        if (isTokenTerminal(current_grammar) && doesGrammarMatchToken(current_grammar, token) && !isProgram(token)) {
+        if (isTokenTerminal(current_grammar) && doesGrammarMatchToken(current_grammar, token)) {
           ll.pop();
 
           if (rpn_generation.top()->getType() != EMPTY) {
@@ -167,10 +167,11 @@ bool RPN::isNumber(Token* token) {
 
 bool RPN::isOperation(Token* token) {
   TokenType token_type = token->getType();
+  vector<TokenType> operations = { PLUS, MINUS, MULTIPLY, DIVIDE, ASSIGN, TAG_PLACE, JUMP_FALSE };
 
-  if (token_type == PLUS || token_type == MINUS || token_type == MULTIPLY || token_type == DIVIDE)
-    return true;
-
+  for (TokenType operation : operations) {
+    if (token_type == operation) return true;
+  }
   return false;
 }
 
@@ -195,59 +196,132 @@ int RPN::tokenToValue(Token *token) {
 // ==================================================
 
 int RPN::execute() {
-  stack<int> execution_stack;
-
   // HELPER FUNCTION
-  auto pop_back_and_get = [](stack<int>& stack) -> int {
+  auto pop_back_and_get = [](stack<Token*> &stack) -> Token* {
     if (stack.empty()) {
       Error::printError("Execution time", "Execution stack empty");
-      return -1;
+      return new Token(INTEGER, "-1");
     }
 
-    int value = stack.top();
+    Token* token = stack.top();
     stack.pop();
-    return value;
+    return token;
   };
 
+  stack<Token*> result;
+  stack<Token*> tags;
   int i = 0;
   while (i < rpn.size()) {
     Token* token = rpn[i];
 
     switch (token->getType()) {
+      case PLUS: {
+        int right_operand = tokenToValue(pop_back_and_get(result));
+        int left_operand = tokenToValue(pop_back_and_get(result));
+
+        result.push(new Token(INTEGER, to_string(left_operand + right_operand)));
+        break;
+      }
+
+      case MINUS: {
+        int right_operand = tokenToValue(pop_back_and_get(result));
+        int left_operand = tokenToValue(pop_back_and_get(result));
+
+        result.push(new Token(INTEGER, to_string(left_operand - right_operand)));
+        break;
+      }
+
       case ASSIGN: {
-        assert(i >= 2);
-        string variable_name= rpn[i - 2]->getLiteral();
-        string variable_value = to_string(tokenToValue(rpn[i - 1]));
+        string variable_value = to_string(tokenToValue(pop_back_and_get(result)));
+        string variable_name= pop_back_and_get(result)->getLiteral();
 
         variables[variable_name] = variable_value;
 
         break;
       }
 
-      case GREATER: {
-        assert(i >= 2);
-        int left_operand = tokenToValue(rpn[i - 2]);
-        int right_operand = tokenToValue(rpn[i - 1]);
+      case MULTIPLY: {
+        int right_operand = tokenToValue(pop_back_and_get(result));
+        int left_operand = tokenToValue(pop_back_and_get(result));
 
-        execution_stack.push(left_operand > right_operand ? 1 : 0);
+        result.push(new Token(INTEGER, to_string(left_operand * right_operand)));
+
+        break;
+      }
+
+      case DIVIDE: {
+        int right_operand = tokenToValue(pop_back_and_get(result));
+        int left_operand = tokenToValue(pop_back_and_get(result));
+
+        result.push(new Token(INTEGER, to_string(left_operand / right_operand)));
+
+        break;
+      }
+
+      case GREATER: {
+        int right_operand = tokenToValue(pop_back_and_get(result));
+        int left_operand = tokenToValue(pop_back_and_get(result));
+
+        result.push(new Token(INTEGER, to_string(left_operand > right_operand ? 1 : 0)));
+
+        break;
+      }
+
+      case LESS: {
+        int right_operand = tokenToValue(pop_back_and_get(result));
+        int left_operand = tokenToValue(pop_back_and_get(result));
+
+        result.push(new Token(INTEGER, to_string(left_operand < right_operand ? 1 : 0)));
+
+        break;
+      }
+
+      case EQUALITY: {
+        int right_operand = tokenToValue(pop_back_and_get(result));
+        int left_operand = tokenToValue(pop_back_and_get(result));
+
+        result.push(new Token(INTEGER, to_string(left_operand == right_operand ? 1 : 0)));
+
+        break;
+      }
+
+      case INEQUALITY: {
+        int left_operand = tokenToValue(pop_back_and_get(result));
+        int right_operand = tokenToValue(pop_back_and_get(result));
+
+        result.push(new Token(INTEGER, to_string(left_operand != right_operand ? 1 : 0)));
 
         break;
       }
 
       case JUMP_FALSE: {
-        int condition = pop_back_and_get(execution_stack);
+        int condition = stoi(pop_back_and_get(result)->getLiteral());
         if (condition == 0) {
-          assert(i >= 1);
-          i = stoi(rpn[i - 1]->getLiteral()) - 1;
+          i = stoi(pop_back_and_get(tags)->getLiteral()) - 1;
         }
 
         break;
       }
 
+      case JUMP: {
+        i = stoi(pop_back_and_get(tags)->getLiteral()) - 1;
+
+        break;
+      }
+
       case COUT: {
-        assert(i >= 1);
-        int value = tokenToValue(rpn[i - 1]);
+        int value = tokenToValue(pop_back_and_get(result));
         cout << value << endl;
+
+        break;
+      }
+
+      default: {
+        if (rpn[i]->getType() == TAG_PLACE) {
+          tags.push(rpn[i]);
+        } else {
+          result.push(rpn[i]);
+        }
 
         break;
       }
@@ -257,6 +331,7 @@ int RPN::execute() {
     i++;
   }
 
+  if (result.size()) return stoi(result.top()->getLiteral());
   return 0;
 }
 

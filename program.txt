@@ -1,2 +1,1 @@
-int a = 32;
-{ if ( a > 2 ) { cout ( a ); } }
+{ if (2 < 1) { cout(22); } else { cout (44); }}
