@@ -29,8 +29,9 @@ class RPN {
   vector<TokenType> rpnGenerationTable[RPN_STATE_SIZE][26] = {
     {
       { PROGRAM11, IDENTIFIER, EMPTY, EMPTY, ASSIGN, EMPTY }, 
-      {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, 
-      { EMPTY, EMPTY, EMPTY },
+      { PROGRAM12, IDENTIFIER, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY },
+      {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, 
+      { PROGRAM14, EMPTY, PROGRAM15 },
       {}, {}, {}
     },
     {
@@ -100,7 +101,9 @@ class RPN {
       {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, 
     },
     {
-      {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, 
+      {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, 
+      { EMPTY, EMPTY, INDEXING },
+      {}, {}, {}, {}, {}, {}, {}, {}, {}, 
     },
     {
       {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, 
@@ -196,7 +199,8 @@ class RPN {
 public:
   vector<Token*> generateRPNGeneration(int state, TokenType tokenType, Token* value);
   vector<Token*> generateRPNGeneration(int state, TokenType tokenType);
-  unordered_map<string, string> variables;
+  unordered_map<string, int> variables;
+  unordered_map<string, int*> arrays;
   RPN(ifstream *file);
   void generate();
   int execute();

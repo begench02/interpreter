@@ -81,8 +81,20 @@ void RPN::generate() {
 
         break;
       } case PROGRAM11: {
-        variables[token->getLiteral()] = "0";
+        variables[token->getLiteral()] = 0;
 
+        break;
+      } case PROGRAM12: {
+        arrays[token->getLiteral()] = 0;
+
+        break;
+      } case PROGRAM14: {
+        rpn.push_back(new Token(FILL_ARRAY));
+
+        break;
+      } case PROGRAM15: {
+        rpn.push_back(new Token(FREE));
+        
         break;
       } default: { 
         if (token->getType() == IDENTIFIER || token->getType() == INTEGER) {
@@ -198,7 +210,7 @@ int RPN::tokenToValue(Token *token) {
     if (variables.count(variable_name) == 0) {
       Error::printWarning("No line", "Variable %s not initialized");
     } else {
-      result = stoi(variables[variable_name]);
+      result = variables[variable_name];
     }
 
     return result;
@@ -223,6 +235,7 @@ int RPN::execute() {
 
   stack<Token*> result;
   stack<Token*> tags;
+  stack<int*> indexed;
   int i = 0;
   while (i < rpn.size()) {
     Token* token = rpn[i];
@@ -245,9 +258,15 @@ int RPN::execute() {
       }
 
       case ASSIGN: {
-        string variable_value = to_string(tokenToValue(pop_back_and_get(result)));
-        string variable_name= pop_back_and_get(result)->getLiteral();
+        int variable_value = tokenToValue(pop_back_and_get(result));
 
+        if (!indexed.empty()) {
+          (*indexed.top()) = variable_value;
+          indexed.pop();
+          break;
+        }
+
+        string variable_name= pop_back_and_get(result)->getLiteral();
         variables[variable_name] = variable_value;
 
         break;
@@ -323,13 +342,42 @@ int RPN::execute() {
       }
 
       case COUT: {
-        int value = tokenToValue(pop_back_and_get(result));
+        int value;
+        if (!indexed.empty()) {
+          value = *indexed.top();
+        } else {
+          value = tokenToValue(pop_back_and_get(result));
+        }
+        
         cout << value << endl;
 
         break;
       }
 
-      default: {
+      case FILL_ARRAY: {
+        int array_size = tokenToValue(pop_back_and_get(result));
+        string array_name = pop_back_and_get(result)->getLiteral();
+        
+        arrays[array_name] = (int*)malloc(array_size * sizeof(int));
+        break;
+      }
+
+      case FREE: {
+        for (auto& [array_name, array_passport] : arrays) {
+          free(array_passport);
+        }
+
+        break;
+      }
+
+      case INDEXING: {
+        int index = tokenToValue(pop_back_and_get(result));
+        string array_name = pop_back_and_get(result)->getLiteral();
+
+        indexed.push(&arrays[array_name][index]);
+
+        break;
+      } default: {
         if (rpn[i]->getType() == TAG_PLACE) {
           tags.push(rpn[i]);
         } else {
