@@ -6,7 +6,7 @@ namespace Error {
     }
     void printError(string line, int offset, string message) {
         std::cout << "[line] " << line << ". "
-            << "[error]: " << offset << message << std::endl;
+            << "[error]: " << offset << " " << message << std::endl;
         exit(EXIT_FAILURE);
 
     }
@@ -16,6 +16,6 @@ namespace Error {
     }
     void printWarning(string line, int offset, string message) {
         std::cout << "[line] " << line << ". "
-            << "[warning]: " << offset << message << std::endl;
+            << "[warning]: " << offset << " " << message << std::endl;
     }
 };

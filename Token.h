@@ -26,9 +26,7 @@ class Token {
 
     TokenType getType();
     string getLiteral();
-    bool isOperation();
     string toString();
-    string isToken();
 
 
   private:

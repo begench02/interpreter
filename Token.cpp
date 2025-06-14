@@ -1,5 +1,4 @@
 #include "Token.h"
-#include <set>
 
 Token::Token(TokenType type, string literal) {
   this->type = type;
@@ -16,11 +15,6 @@ TokenType Token::getType() {
 
 string Token::getLiteral() {
   return this->literal;
-}
-
-bool Token::isOperation() {
-  set<TokenType> literals = { IDENTIFIER, INTEGER, OPEN_ROUND_BRACKET, CLOSE_ROUND_BRACKET };
-  return literals.count(this->type) == 0; 
 }
 
 string Token::toString() {

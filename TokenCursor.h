@@ -47,11 +47,15 @@ class TokenCursor {
           { "cout", COUT }
         };
 
-        bool isAlpha(char c);
-        bool isDigit(char c);
-        Token* scanCharacter(string line, int start, int* current, State state, Token *token);
-        bool isIdentifier(string word);
+        Token* scanCharacter(const string &line, int start, int* current, State state, Token *token);
+        bool isKeyword(string &word) const;
+
+        // HELPER
+        Token *handleWhitespace(const string &line, int &start, int *current, State &state, Token *token);
+        Token *handleTerminal(const string &line, int &start, int *current, State &state, Token *token);
+        Token *handleNumberOrIdentifier(const string &line, int &start, int *current, State &state, Token *token);
+        Token *finalizeToken(const string &line, int start, int *current, State state, Token *token);
     public:
-        Token* scanToken(string line, int* offset);
+        Token* scanToken(const string &line, int* offset);
 };
 

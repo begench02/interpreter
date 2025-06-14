@@ -1,90 +1,120 @@
 #include "TokenCursor.h"
 #include "CharacterType.h"
 
-bool TokenCursor::isIdentifier(string word) {
+bool TokenCursor::isKeyword(string &word) const {
     return this->keywords.count(word) > 0;
 }
 
-Token* TokenCursor::scanCharacter(string line, int start, int *current, State state, Token *token) {
-  if (state == O) {
-    Error::printWarning(line, *current, "Unexpected character: ");
-  } else if (state == F) {
-    if (token->getType() == INTEGER) {
-      string number = line.substr(start, (*current) - start);
-      return new Token(token->getType(), number);
-    } else if (token->getType() == IDENTIFIER) {
-      string identifier = line.substr(start, (*current) - start - 1);
-      if (keywords.count(identifier)) {
-        return new Token(keywords[identifier]);
-      } else {
-        return new Token(IDENTIFIER, identifier);
-      }
-    } else {
-      return token;
-    }
+Token* TokenCursor::handleWhitespace(const string &line, int &start, int *current, State &state, Token *token) {
+  if (token->getType() == START) {
+    ++start;
+    *current = start;
+  } else {
+    state = F;
   }
 
-  if (line.length() == *current && token->getType() == IDENTIFIER) {
-    string word = line.substr(start, (*current) - start);
-    if (this->keywords.count(word)) {
-      TokenType token_type = this->keywords.at(word);
-      return new Token(token_type);
-    }
-    return new Token(token->getType(), word);
+  return scanCharacter(line, start, current, state, token);
+}
+
+Token *TokenCursor::handleTerminal(const string &line, int &start, int *current, State &state, Token *token) {
+  if (token->getType() != START) {
+    return scanCharacter(line, start, current, F, token);
   }
 
-  char character = line[*current];
+  char ch = line[*current];
+  auto it = terminals.find(ch);
 
-  if (character == ' ') {
-    if (token->getType() == START) {
-      start++;
-      (*current)++;
-      return this->scanCharacter(line, start, current, S, token);
-    } else {
-      (*current)++;
-      return this->scanCharacter(line, start, current, F, token);
-    }
+  if (it == terminals.end()) {
+    return nullptr;
   }
 
-  if (character == ' ' && state == S) {
-    (*current) = (*current) + 1;
-    start = start + 1;
-    return this->scanCharacter(line, start, current, state, token);
-  }
+  TokenType terminal = it->second;
+  ++(*current);
 
-  if (this->terminals.count(character) > 0) {
-    if (state == S) {
-      TokenType terminal = this->terminals.at(character);
-      (*current)++;
-      if (terminal == PLUS || terminal == MINUS) {
-        token = new Token(terminal, to_string(1));
-      } else if (terminal == MULTIPLY || terminal == DIVIDE) {
-        token = new Token(terminal, to_string(2));
-      } else {
-        token = new Token(terminal);
-      }
+  switch (terminal) {
+    case PLUS:
+    case MINUS:
+      token = new Token(terminal, "1");
       
-      return this->scanCharacter(line, start, current, F, token);
-    } else {
-      return this->scanCharacter(line, start, current, F, token);
-    }
+      break;
+    case MULTIPLY:
+    case DIVIDE: 
+      token = new Token(terminal, "2");
+
+      break;
+    default:
+      token = new Token(terminal);
   }
 
-  CharacterType *characterType = new CharacterType(character);
-  if (characterType->type() == NUMBER) {
-    state = this->transitionTable[state][INTEGER - 7];
-    (*current)++;
-    return this->scanCharacter(line, start, current, state, new Token(INTEGER));
-  } else if (characterType->type() == STRING) {
-    state = this->transitionTable[state][IDENTIFIER - 7];
-    (*current)++;
-    return this->scanCharacter(line, start, current, state, new Token(IDENTIFIER));
+  state = F;
+  return scanCharacter(line, start, current, state, token);
+}
+
+Token *TokenCursor::handleNumberOrIdentifier(const string &line, int &start, int *current, State &state, Token *token) {
+  char ch = line[*current];
+  CharacterType characterType(ch);
+
+  if (characterType.type() == NUMBER) {
+    state = transitionTable[state][INTEGER - 7];
+    ++(*current);
+
+    token = new Token(INTEGER, line.substr(start, *current - start));
+    return scanCharacter(line, start, current, state, token);
+  }
+
+  if (characterType.type() == STRING) {
+    state = transitionTable[state][IDENTIFIER - 7];
+    ++(*current);
+
+    token = new Token(IDENTIFIER, line.substr(start, *current - start));
+    return scanCharacter(line, start, current, state, token);
+  }
+
+  return scanCharacter(line, start, current, F, token);
+}
+
+Token *TokenCursor::finalizeToken(const string &line, int start, int *current, State state, Token *token) {
+  if (state != F) return token;
+
+  if (token->getType() == INTEGER) {
+    string number = line.substr(start, *current - start);
+    return new Token(INTEGER, number);
+  }
+
+  if (token->getType() == IDENTIFIER) {
+    string identifier = line.substr(start, *current - start);
+    if (isKeyword(identifier)) {
+      return new Token(keywords.at(identifier), identifier);
+    }
+    return new Token(IDENTIFIER, identifier);
   }
 
   return token;
 }
 
-Token* TokenCursor::scanToken(string line, int* offset) {
+Token *TokenCursor::scanCharacter(const string &line, int start, int *current, State state, Token *token) {
+  if (state == F || *current >= static_cast<int>(line.length())) {
+    return finalizeToken(line, start, current, state, token);
+  }
+
+  if (line[*current] == ' ') {
+    return handleWhitespace(line, start, current, state, token);
+  }
+
+  if (terminals.count(line[*current]) > 0) {
+      return handleTerminal(line, start, current, state, token);
+  }
+
+  if (auto res = handleNumberOrIdentifier(line, start, current, state, token)) {
+    return res;
+  }
+
+  Error::printWarning(line, *current, "Unexpected character: ");
+  ++(*current);
+  return scanCharacter(line, state, current, state, token);
+}
+
+Token* TokenCursor::scanToken(const string &line, int *offset) {
   State state = S;
   int start = *offset;
 
