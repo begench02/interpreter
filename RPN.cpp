@@ -7,27 +7,12 @@ RPN::RPN(ifstream *file) {
 }
 
 // +========================================================+
-vector<Token*> RPN::generateRPNGeneration(int state, TokenType tokenType, Token* token) {
+vector<Token*> RPN::generateRPNGeneration(int state, TokenType tokenType) {
   vector<Token*> result;
   vector<TokenType> rpn_generation = rpnGenerationTable[state][tokenType];
 
   for (TokenType token_type : rpn_generation) {
     result.push_back(new Token(token_type));
-  }
-
-  return result;
-}
-
-vector<Token*> RPN::generateRPNGeneration(int state, TokenType tokenType) {
-  vector<Token*> result;
-  vector<TokenType> rpn_generation = rpnGenerationTable[state][tokenType];
-  
-  for (TokenType token_type : rpn_generation) {
-    if (token_type == INTEGER || token_type == IDENTIFIER) {
-      cout << "Should be error!" << endl;
-    } else {
-      result.push_back(new Token(token_type));
-    }
   }
 
   return result;
@@ -153,7 +138,7 @@ void RPN::generate() {
         int row = ll.top() - 100;
         TokenType column = token->getType();
         vector<int> rules_temp = rpnGrammarTable[row][column];
-        vector<Token*> rpn_generation_temp = generateRPNGeneration(row, column, token);
+        vector<Token*> rpn_generation_temp = generateRPNGeneration(row, column);
 
         if (rules_temp.empty()) {
           cout << "Token type: " << token->getType() << endl;
@@ -352,6 +337,14 @@ int RPN::execute() {
         cout << value << endl;
 
         break;
+      }
+
+      case CIN: {
+          int value;
+          cin >> value;
+          result.push(new Token(INTEGER, to_string(value)));
+
+          break;
       }
 
       case FILL_ARRAY: {
