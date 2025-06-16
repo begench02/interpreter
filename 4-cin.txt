@@ -1,9 +1,0 @@
-intarr arr[10];
-int i = 0;
-
-{
-  while (i < 10) {
-    int val = cin(arr[i]);
-    i += 1;
-  }
-}

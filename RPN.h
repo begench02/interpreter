@@ -207,7 +207,6 @@ public:
   bool isNumber(Token* token);
   bool isOperation(Token* token);
 
-
   // HELPER METHODS
   int tokenToValue(Token* token);
   void replaceIdentifier(Token* token);

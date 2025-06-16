@@ -320,6 +320,7 @@ int RPN::execute() {
         int value;
         if (!indexed.empty()) {
           value = *indexed.top();
+          indexed.pop();
         } else {
           value = tokenToValue(pop_back_and_get(result));
         }
@@ -332,16 +333,21 @@ int RPN::execute() {
       case CIN: {
           int value;
           cin >> value;
-          result.push(new Token(INTEGER, to_string(value)));
+
+          string variable_name= pop_back_and_get(result)->getLiteral();
+          variables[variable_name] = value;
 
           break;
       }
 
       case FILL_ARRAY: {
+        if (arrays.empty()) break;
+
         int array_size = tokenToValue(pop_back_and_get(result));
         string array_name = pop_back_and_get(result)->getLiteral();
         
         arrays[array_name] = (int*)malloc(array_size * sizeof(int));
+
         break;
       }
 
