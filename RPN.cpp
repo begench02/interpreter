@@ -100,16 +100,6 @@ void RPN::generate() {
     return current_grammar == token->getType();
   };
 
-  auto isProgram = [](Token* token) {
-    vector<TokenType> programs = { PROGRAM1, PROGRAM2, PROGRAM3, PROGRAM11 };
-
-    for (TokenType program : programs) {
-      if (program == token->getType()) return true;
-    }
-
-    return false;
-  };
-
   while (getline(*program, line)) {
     int offset = 0;
 
