@@ -1,3 +1,0 @@
-intarr arr[10];
-{ arr[0] = 23;
-  cout(arr[0]); }
